@@ -1,63 +1,101 @@
+// inv: size >= 0 && 0 <= head < elements.length && 0 <= tail < elements.length
 public class ArrayQueue {
     private Object[] elements = new Object[10];
-    private int head; // = 0
-    private int tail; // = 0
-    private int size; // = 0
+    private int head = 0;
+    private int tail = 0;
+    private int size = 0;
 
+    // pre: true
     public void enqueue(Object o) {
+        assert o != null;
+
         ensureCapacity(size + 1);
         elements[tail] = o;
-        tail = (tail+1)%elements.length;
+        tail = (tail + 1) % elements.length;
         size++;
     }
+    // post: for i = head..tail: elements[i + head' - head]' = elements[i + head' - head]
+    // && size' = size + 1 && (head' = head || head' = 0) && (tail' = (tail + 1) % elements.length || tail' = size + 1)
 
+    // pre: size > 0
     public Object element() {
+        assert size > 0;
+
         return elements[head];
     }
+    // post: R = elements[head]
 
+    // pre: size > 0
     public Object dequeue() {
+        assert size > 0;
+
         Object o = element();
-        head = (head+1)%elements.length;
+        elements[head] = null;
+        head = (head + 1) % elements.length;
         size--;
+
         return o;
     }
+    // post: for i = head + 1..tail - 1: elements[i + head' - head]' = elements[i + head' - head]
+    // && size' = size - 1 && head' = (head + 1) % elements.length && tail' = tail
 
+    // pre: true
     public int size() {
         return size;
     }
+    // post: R = size
 
+    // pre: true
     public boolean isEmpty() {
         return size == 0;
     }
+    // post: R = size == 0
 
+    // pre: true
     public void clear() {
         head = 0;
         tail = 0;
         size = 0;
     }
+    // post: head' = 0 && tail' = 0 && size' = 0
 
+    // pre: true
     public void push(Object o) {
         ensureCapacity(size + 1);
         head = (head - 1 + elements.length) % elements.length;
         elements[head] = o;
         size++;
     }
+    // post: for i = head..tail: elements[i + head' - head]' = elements[i + head' - head]
+    // && size' = size + 1 && (head' = (head - 1 + elements.length) % elements.length || head' = elements.length - 2) && (tail' = tail || tail' = size)
 
-    public  Object peek() {
+    // pre: size > 0
+    public Object peek() {
+        assert size > 0;
+
         return elements[(tail - 1 + elements.length) % elements.length];
     }
+    // post: R = elements[(tail - 1 + elements.length) % elements.length]
 
-    public  Object remove() {
+    // pre: size > 0
+    public Object remove() {
+        assert size > 0;
+
         Object o = peek();
+        elements[(tail - 1 + elements.length) % elements.length] = null;
         tail = (tail - 1 + elements.length) % elements.length;
         size--;
+
         return o;
     }
+    // post: for i = head..tail - 1: elements[i + head' - head]' = elements[i + head' - head]
+    // && size' = size - 1 && head' = head && tail' = (tail - 1 + elements.length) % elements.length
 
-    public  void ensureCapacity(int capacity) {
+    // pre: true
+    private void ensureCapacity(int capacity) {
         if (capacity <= elements.length)
             return;
-        Object[] newElements = new Object[2 * capacity];
+        Object[] newElements = new Object[2 * elements.length];
 
         for (int i = 0; i < size; i++) {
             newElements[i] = elements[(head + i) % elements.length];
@@ -66,4 +104,5 @@ public class ArrayQueue {
         tail = size;
         elements = newElements;
     }
+    // post: (head' = head || head' = 0) && (tail' = tail || tail' = size) && size' = size && for i = head..tail: elements[i + head' - head]' = elements[i + head' - head]
 }
