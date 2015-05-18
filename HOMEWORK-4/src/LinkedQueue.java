@@ -63,4 +63,8 @@ public class LinkedQueue extends AbstractQueue {
             this.next = next;
         }
     }
+
+    protected Queue create() {
+        return new LinkedQueue();
+    }
 }

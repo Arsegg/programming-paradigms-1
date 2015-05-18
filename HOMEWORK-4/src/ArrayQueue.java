@@ -64,4 +64,8 @@ public class ArrayQueue extends AbstractQueue {
         tail = size;
         elements = newElements;
     }
+
+    protected Queue create() {
+        return new ArrayQueue();
+    }
 }
