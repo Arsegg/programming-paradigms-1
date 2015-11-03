@@ -426,3 +426,5 @@ function parsePrefix(expr) {
     }
     return ans;
 }
+
+println(parsePrefix("2 + 2"))

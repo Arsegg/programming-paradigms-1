@@ -46,44 +46,47 @@
 (defn Variable [value]
   (_Variable. value))
 
-(deftype _Negate [a]
+(defn applyFunction [function args kwargs]
+  (apply function (map #(evaluate % kwargs) args)))
+
+(deftype _Negate [args]
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (- (evaluate a kwargs)))
+    (applyFunction - args kwargs))
   (diff [this x]
-    (Negate (diff a x))))
+    (Negate (diff (first args) x))))
 
-(defn Negate [a]
-  (_Negate. a))
+(defn Negate [& args]
+  (_Negate. args))
 
-(deftype _Sin [a]
+(deftype _Sin [args]
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (StrictMath/sin (evaluate a kwargs)))
+    (applyFunction #(StrictMath/sin %) args kwargs))
   (diff [this x]
-    (Multiply (Cos a) (diff a x))))
+    (Multiply (Cos (first args)) (diff (first args) x))))
 
-(defn Sin [a]
-  (_Sin. a))
+(defn Sin [& args]
+  (_Sin. args))
 
-(deftype _Cos [a]
+(deftype _Cos [args]
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (StrictMath/cos (evaluate a kwargs)))
+    (applyFunction #(StrictMath/cos %) args kwargs))
   (diff [this x]
-    (Multiply (Negate (Sin a)) (diff a x))))
+    (Multiply (Negate (Sin (first args))) (diff (first args) x))))
 
-(defn Cos [a]
-  (_Cos. a))
+(defn Cos [& args]
+  (_Cos. args))
 
 (deftype _Add [args]
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (apply + (map #(evaluate % kwargs) args)))
+    (applyFunction + args kwargs))
   (diff [this x]
     (_Add. (map #(diff % x) args))))
 
@@ -94,7 +97,7 @@
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (apply - (map #(evaluate % kwargs) args)))
+    (applyFunction - args kwargs))
   (diff [this x]
     (_Subtract. (map #(diff % x) args))))
 
@@ -105,7 +108,7 @@
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (apply * (map #(evaluate % kwargs) args)))
+    (applyFunction * args kwargs))
   (diff [this x]
     (let [a (first args)
           _b (rest args)]
@@ -121,35 +124,33 @@
   TripleExpression
   clojure.lang.IFn
   (evaluate [this kwargs]
-    (apply / (map #(evaluate % kwargs) args)))
+    (applyFunction / args kwargs))
   (diff [this x]
     (let [a (first args)
           _b (rest args)]
       (if (empty? _b)
         (diff a x)
         (let [b (_Multiply. _b)]
-          (Divide (Subtract (Multiply (diff a x) b) (Multiply a (diff b x))) (Multiply b b))))
-      )
-    ))
+          (Divide (Subtract (Multiply (diff a x) b) (Multiply a (diff b x))) (Multiply b b)))))))
 
 (defn Divide [& args]
   (_Divide. args))
 
-(def mapOfUnaryOperators {"negate" Negate
-                          "sin" Sin
-                          "cos" Cos})
-
-(def mapOfBinaryOperators {"+" Add
-                           "-" Subtract
-                           "*" Multiply
-                           "/" Divide})
+(def mapOfOperators {"negate" Negate
+                     "sin" Sin
+                     "cos" Cos
+                     "+" Add
+                     "-" Subtract
+                     "*" Multiply
+                     "/" Divide})
 
 (defn parse [expr]
   (cond
     (number? expr) (Constant expr)
     (symbol? expr) (Variable (str expr))
-    (contains? mapOfUnaryOperators (str (first expr))) (apply (get mapOfUnaryOperators (str (first expr))) (map parse (rest expr)))
-    (contains? mapOfBinaryOperators (str (first expr))) (apply (get mapOfBinaryOperators (str (first expr))) (map parse (rest expr)))))
+    (contains? mapOfOperators (str (first expr))) (apply (mapOfOperators (str (first expr))) (map parse (rest expr)))))
 
 (defn parseObject [expr]
   (parse (read-string expr)))
+
+(println (diff (Multiply (Variable "z") (Variable "z")) "z"))

@@ -55,3 +55,5 @@
 
 (defn parseFunction [expr]
   (parse (read-string expr)))
+
+(println ((parseFunction "(+ x x)") {"x" 5}))
